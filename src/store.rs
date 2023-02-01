@@ -23,7 +23,7 @@ impl Store {
     pub async fn get_next_answer_id(&self) -> crate::types::answer::AnswerId {
         let mut id_ref = self.answer_id.write().await;
         let id = id_ref.deref_mut();
-        *id = *id + 1;
+        *id += 1;
         crate::types::answer::AnswerId::from_str(&format!("{}", *id)).unwrap()
     }
 }

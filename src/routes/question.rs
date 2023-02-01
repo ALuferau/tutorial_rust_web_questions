@@ -27,7 +27,7 @@ pub async fn get_question(
     let questions = store.questions.read().await;
     match questions.get(&crate::types::question::QuestionId(id)) {
         Some(q) => Ok(warp::reply::json(&q)),
-        None => Err(warp::reject::custom(crate::error::Error::QuestionNotFound)),
+        None => Err(warp::reject::custom(handle_errors::Error::QuestionNotFound)),
     }
 }
 
@@ -55,7 +55,7 @@ pub async fn update_question(
     question.id = crate::types::question::QuestionId(id);
     match store.questions.write().await.get_mut(&question.id) {
         Some(q) => *q = question,
-        None => return Err(warp::reject::custom(crate::error::Error::QuestionNotFound)),
+        None => return Err(warp::reject::custom(handle_errors::Error::QuestionNotFound)),
     };
 
     Ok(warp::reply::with_status(
@@ -78,6 +78,6 @@ pub async fn delete_question(
             "Question deleted",
             warp::hyper::StatusCode::OK,
         )),
-        None => Err(warp::reject::custom(crate::error::Error::QuestionNotFound)),
+        None => Err(warp::reject::custom(handle_errors::Error::QuestionNotFound)),
     }
 }
