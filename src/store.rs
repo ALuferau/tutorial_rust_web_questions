@@ -1,7 +1,7 @@
 use std::{collections::HashMap, ops::DerefMut, str::FromStr, sync::Arc};
 use tokio::sync::RwLock;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Store {
     pub questions:
         Arc<RwLock<HashMap<crate::types::question::QuestionId, crate::types::question::Question>>>,
