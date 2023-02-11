@@ -1,38 +1,50 @@
 #[derive(Debug)]
 pub struct Pagination {
-    pub start: usize,
-    pub end: usize,
+    limit: Option<u32>,
+    offset: u32,
 }
 impl Pagination {
     pub fn new(
         params: &std::collections::HashMap<String, String>,
-    ) -> Result<Self, handle_errors::Error> {
-        let start = Pagination::get_value("start", params)?;
-        let end = Pagination::get_value("end", params)?;
-        if end >= start {
-            Ok(Pagination { start, end })
-        } else {
-            Err(handle_errors::Error::InvalidRange)
+    ) -> Self {
+        let limit = Pagination::get_value("limit", params, None);
+        let offset = Pagination::get_value("offset", params, Some(0_u32));
+
+        Pagination { limit: limit, offset: offset.unwrap() }
+    }
+    pub fn get_limit(&self) -> Option<i32> {
+        match self.limit {
+            Some(limit) => Some(limit as i32),
+            None => None,
         }
+    }
+    pub fn get_offset(&self) -> i32 {
+        self.offset as i32
     }
     fn get_value(
         key: &str,
         params: &std::collections::HashMap<String, String>,
-    ) -> Result<usize, handle_errors::Error> {
-        params
+        default: Option<u32>,
+    ) -> Option<u32> {
+        if params.contains_key(key) {
+            match params
             .get(key)
             .unwrap()
-            .parse::<usize>()
-            .map_err(handle_errors::Error::ParseError)
+            .parse::<u32>() {
+                Ok(val) => Some(val),
+                Err(e) => {
+                    tracing::event!(tracing::Level::ERROR, "Parsing {} error: {:?}", key, e);
+                    default
+                },
+            }
+        } else {
+            default
+        }
     }
 }
 
 pub fn get_pagination(
     params: std::collections::HashMap<String, String>,
-) -> Result<Pagination, handle_errors::Error> {
-    if params.contains_key("start") && params.contains_key("end") {
-        Pagination::new(&params)
-    } else {
-        Err(handle_errors::Error::MissingParameters)
-    }
+) -> Pagination {
+    Pagination::new(&params)
 }

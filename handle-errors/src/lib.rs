@@ -4,14 +4,16 @@ pub enum Error {
     MissingParameters,
     InvalidRange,
     QuestionNotFound,
+    DatabaseQueryError,
 }
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match *self {
+        match &*self {
             Error::ParseError(ref err) => write!(f, "Can't parse parameter: {}", err),
             Error::MissingParameters => write!(f, "Missing parameter"),
             Error::InvalidRange => write!(f, "Invalid range"),
             Error::QuestionNotFound => write!(f, "Question not found"),
+            Error::DatabaseQueryError => write!(f, "Query could not be executed"),
         }
     }
 }
@@ -22,7 +24,6 @@ pub struct InvalidId;
 impl warp::reject::Reject for InvalidId {}
 
 pub async fn return_error(r: warp::Rejection) -> Result<impl warp::Reply, warp::Rejection> {
-    println!("{:?}", r);
     if let Some(error) = r.find::<warp::filters::cors::CorsForbidden>() {
         Ok(warp::reply::with_status(
             error.to_string(),
@@ -57,6 +58,11 @@ pub async fn return_error(r: warp::Rejection) -> Result<impl warp::Reply, warp::
         Ok(warp::reply::with_status(
             "Question not found".to_string(),
             warp::hyper::StatusCode::NOT_FOUND,
+        ))
+    }  else if let Some(Error::DatabaseQueryError) = r.find() {
+        Ok(warp::reply::with_status(
+            "Database Query Error".to_string(),
+            warp::hyper::StatusCode::INTERNAL_SERVER_ERROR,
         ))
     } else {
         Ok(warp::reply::with_status(

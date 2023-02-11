@@ -15,7 +15,7 @@ async fn main() {
         .with_span_events(FmtSpan::CLOSE)
         .init();
 
-    let store = store::Store::new();
+    let store = store::Store::new("postgres://postgres:YMvkW374VM1Dgz1Y@localhost:5432/web").await;
     let store_filter = warp::any().map(move || store.clone());
 
     let cors = warp::cors()
@@ -42,7 +42,7 @@ async fn main() {
 
     let get_question = warp::get()
         .and(question_path)
-        .and(warp::path::param::<String>())
+        .and(warp::path::param::<i32>())
         .and(warp::path::end())
         .and(store_filter.clone())
         .and_then(routes::question::get_question);
@@ -56,7 +56,7 @@ async fn main() {
 
     let update_question = warp::put()
         .and(question_path)
-        .and(warp::path::param::<String>())
+        .and(warp::path::param::<i32>())
         .and(warp::path::end())
         .and(store_filter.clone())
         .and(warp::body::json())
@@ -64,7 +64,7 @@ async fn main() {
 
     let delete_question = warp::delete()
         .and(question_path)
-        .and(warp::path::param::<String>())
+        .and(warp::path::param::<i32>())
         .and(warp::path::end())
         .and(store_filter.clone())
         .and_then(routes::question::delete_question);

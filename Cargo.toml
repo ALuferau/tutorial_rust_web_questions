@@ -16,3 +16,5 @@ uuid = { version = "1.3", features = ["v4"] }
 
 tracing = { version = "0.1", features = ["log"] }
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+sqlx = { version = "0.6", features = ["runtime-tokio-rustls", "migrate", "postgres"]}
