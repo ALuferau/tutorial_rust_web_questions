@@ -7,3 +7,6 @@ edition = "2021"
 
 [dependencies]
 warp = "0.3"
+reqwest = "0.11"
+sqlx = "0.6"
+rust-argon2 = "1.0.0"
