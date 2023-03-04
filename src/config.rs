@@ -1,6 +1,5 @@
 use std::env;
 use clap::Parser;
-use dotenv;
 
 /// Q&A web service API
 #[derive(Parser, Debug)]
@@ -31,7 +30,6 @@ pub struct Config {
 
 impl Config {
     pub fn new() -> Result<Config, handle_errors::Error> {
-        dotenv::dotenv().ok();
         let config = Config::parse();
 
         if let Err(_) = env::var("BAD_WORDS_API_KEY") {
@@ -69,5 +67,39 @@ impl Config {
             })?,
             db_name,
         })
+    }
+}
+
+
+#[cfg(test)]
+mod config_tests {
+    use super::*;
+
+    #[test]
+    fn test_config() {
+        // Act - no environment exists
+        let result = std::panic::catch_unwind(|| Config::new());
+        // Assert
+        assert!(result.is_err());
+
+        // Arrange
+        env::set_var("BAD_WORDS_API_KEY", "yes");
+        env::set_var("PASETO_KEY", "yes");
+        env::set_var("POSTGRES_USER", "user");
+        env::set_var("POSTGRES_PASSWORD", "pass");
+        env::set_var("POSTGRES_HOST", "localhost");
+        env::set_var("POSTGRES_PORT", "5432");
+        env::set_var("POSTGRES_DB", "rustwebdev");
+
+        // Act
+        let config = Config::new().unwrap();
+
+        // Assert
+        assert_eq!(config.db_user, String::from("user"));
+        assert_eq!(config.db_password, String::from("pass"));
+        assert_eq!(config.db_host, String::from("localhost"));
+        assert_eq!(config.db_name, String::from("rustwebdev"));
+        assert_eq!(config.db_port, 5432_u16);
+        assert_eq!(config.port, 8080_u16);
     }
 }

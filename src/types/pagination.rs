@@ -48,3 +48,100 @@ pub fn get_pagination(
 ) -> Pagination {
     Pagination::new(&params)
 }
+
+
+#[cfg(test)]
+mod pagination_tests {
+    use super::{Pagination, get_pagination};
+
+    #[test]
+    fn valid_pagination() {
+        // arrange
+        let params = std::collections::HashMap::from([
+            (String::from("limit"), String::from("1")),
+            (String::from("offset"), String::from("1")),
+        ]);
+
+        // act
+        let pagination = Pagination::new(&params);
+
+        // assert
+        assert_eq!(pagination.get_limit(), Some(1));
+        assert_eq!(pagination.get_offset(), 1);
+    }
+
+    #[test]
+    fn get_valid_pagination() {
+        // arrange
+        let params = std::collections::HashMap::from([
+            (String::from("limit"), String::from("1")),
+            (String::from("offset"), String::from("1")),
+        ]);
+
+        // act
+        let pagination = get_pagination(params);
+
+        // assert
+        assert_eq!(pagination.get_limit(), Some(1));
+        assert_eq!(pagination.get_offset(), 1);
+    }
+
+    #[test]
+    fn missing_offset_pagination() {
+        // arrange
+        let params = std::collections::HashMap::from([
+            (String::from("limit"), String::from("1")),
+        ]);
+
+        // act
+        let pagination = Pagination::new(&params);
+
+        // assert
+        assert_eq!(pagination.get_limit(), Some(1));
+        assert_eq!(pagination.get_offset(), 0);
+    }
+
+    #[test]
+    fn missing_limit_pagination() {
+        // arrange
+        let params = std::collections::HashMap::from([
+            (String::from("offset"), String::from("1")),
+        ]);
+
+        // act
+        let pagination = Pagination::new(&params);
+
+        // assert
+        assert_eq!(pagination.get_limit(), None);
+        assert_eq!(pagination.get_offset(), 1);
+    }
+
+    #[test]
+    fn missing_both_pagination() {
+        // arrange
+        let params = std::collections::HashMap::new();
+
+        // act
+        let pagination = Pagination::new(&params);
+
+        // assert
+        assert_eq!(pagination.get_limit(), None);
+        assert_eq!(pagination.get_offset(), 0);
+    }
+
+    #[test]
+    fn get_invalid_pagination() {
+        // arrange
+        let params = std::collections::HashMap::from([
+            (String::from("limit"), String::from("one")),
+            (String::from("offset"), String::from("one")),
+        ]);
+
+        // act
+        let pagination = get_pagination(params);
+
+        // assert
+        assert_eq!(pagination.get_limit(), None);
+        assert_eq!(pagination.get_offset(), 0);
+    }
+}

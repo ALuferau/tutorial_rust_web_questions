@@ -1,14 +1,15 @@
 use warp::{http::Method, Filter};
 use tracing_subscriber::fmt::format::FmtSpan;
 
-mod config;
-mod routes;
+pub mod config;
 mod store;
+mod routes;
 mod profanity;
 mod types;
 
-#[tokio::main]
-async fn main() {
+pub async fn setup_store(
+    config: &config::Config
+) -> Result<store::Store, handle_errors::Error> {
     let log_filter = std::env::var("RUST_LOG")
         .unwrap_or_else(|_| "web_questions=info,warp=error".to_owned());
 
@@ -16,8 +17,6 @@ async fn main() {
         .with_env_filter(log_filter)
         .with_span_events(FmtSpan::CLOSE)
         .init();
-
-    let config = config::Config::new().expect("Config can't be set");
 
     let store = store::Store::new(
         &format!(
@@ -29,6 +28,13 @@ async fn main() {
             config.db_name
         )
     ).await;
+
+    Ok(store)
+}
+
+async fn build_routes(
+    store: store::Store
+) -> impl Filter<Extract = (impl warp::Reply,)> + Clone {
     let store_filter = warp::any().map(move || store.clone());
 
     let cors = warp::cors()
@@ -107,7 +113,7 @@ async fn main() {
         .and(warp::body::json())
         .and_then(routes::authentication::login);
 
-    let routes = get_questions
+    get_questions
         .or(get_question)
         .or(add_question)
         .or(update_question)
@@ -117,7 +123,10 @@ async fn main() {
         .or(login)
         .with(cors)
         .with(warp::trace::request())
-        .recover(handle_errors::return_error);
+        .recover(handle_errors::return_error)
+}
 
-    warp::serve(routes).run(([127, 0, 0, 1], config.port)).await;
+pub async fn run(config: config::Config, store: store::Store) {
+    let routes = build_routes(store).await;
+    warp::serve(routes).run(([0, 0, 0, 0], config.port)).await;
 }
