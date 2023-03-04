@@ -1,6 +1,7 @@
 use warp::{http::Method, Filter};
 use tracing_subscriber::fmt::format::FmtSpan;
 
+mod config;
 mod routes;
 mod store;
 mod profanity;
@@ -16,7 +17,18 @@ async fn main() {
         .with_span_events(FmtSpan::CLOSE)
         .init();
 
-    let store = store::Store::new("postgres://postgres:YMvkW374VM1Dgz1Y@localhost:5432/web").await;
+    let config = config::Config::new().expect("Config can't be set");
+
+    let store = store::Store::new(
+        &format!(
+            "postgres://{}:{}@{}:{}/{}",
+            config.db_user,
+            config.db_password,
+            config.db_host,
+            config.db_port,
+            config.db_name
+        )
+    ).await;
     let store_filter = warp::any().map(move || store.clone());
 
     let cors = warp::cors()
@@ -107,5 +119,5 @@ async fn main() {
         .with(warp::trace::request())
         .recover(handle_errors::return_error);
 
-    warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
+    warp::serve(routes).run(([127, 0, 0, 1], config.port)).await;
 }

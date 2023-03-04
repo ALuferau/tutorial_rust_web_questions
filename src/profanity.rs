@@ -27,10 +27,12 @@ pub async fn check_profanity(
     content: String
 ) -> Result<String, handle_errors::Error> {
     tracing::event!(tracing::Level::INFO, "check_profanity: {}", content);
+
+    let key = std::env::var("BAD_WORDS_API_KEY").unwrap();
     let client = reqwest::Client::new();
     let res = client
         .post("https://api.apilayer.com/bad_words?censor_characters=*")
-        .header("apikey", "8HRhknlPsOxvcEgPeaNHvkBtlZXtCdD7")
+        .header("apikey", key)
         .body(content)
         .send()
         .await
